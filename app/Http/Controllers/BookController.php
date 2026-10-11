@@ -6,6 +6,7 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
+use App\Http\Resources\BookResource;
 
 class BookController extends Controller
 {

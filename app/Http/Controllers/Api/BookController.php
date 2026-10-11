@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Book;
 use App\Http\Requests\Api\UpdateBookRequest;
+use App\Http\Resources\BookResource;
 
 class BookController extends Controller
 {
@@ -29,14 +30,14 @@ class BookController extends Controller
             })
             ->paginate(10);
 
-        return response()->json($books);
+        return BookResource::collection($books);
     }
 
     public function show(Book $book)
     {
-        $book->load(['genres', 'reviews']);
-
-        return response()->json($book);
+        $book->load(['genres', 'reviews.user']); 
+        
+        return new BookResource($book);
     }
 
     public function update(UpdateBookRequest $request, Book $book)
