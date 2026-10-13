@@ -30,8 +30,9 @@ public function toArray(Request $request): array
                     ];
                 });
             }),
-            'average_rating' => $this->resource->getAttribute('reviews_avg_rating'),
-            
+            'average_rating' => $this->resource->getAttribute('reviews_avg_rating') !== null
+            ? (float) $this->resource->getAttribute('reviews_avg_rating')
+            : null,            
             'reviews_count' => $this->whenCounted('reviews'),
             'reviews' => $this->whenLoaded('reviews', function () {
                 return $this->reviews->map(function ($review) {

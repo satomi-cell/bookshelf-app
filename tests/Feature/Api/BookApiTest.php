@@ -74,4 +74,100 @@ class BookApiTest extends TestCase
                  ->assertJsonPath('data.reviews.0.created_at', $review->created_at->toJSON());
     }
 
+    public function test_書籍詳細APIでジャンル情報を取得できる(): void
+    {    
+        $book = Book::factory()->create();
+
+        $genre = \App\Models\Genre::factory()->create([
+            'name' => 'ミステリー',
+        ]);
+
+        $book->genres()->attach($genre->id);
+
+        $response = $this->getJson("/api/v1/books/{$book->id}");
+
+        $response->assertStatus(200)
+                 ->assertJsonPath('data.genres.0.id', $genre->id)
+                 ->assertJsonPath('data.genres.0.name', 'ミステリー');
+    }
+    
+    public function test_書籍一覧APIでキーワード検索ができる(): void
+    {
+        Book::factory()->create([
+            'title' => 'Laravel入門',
+        ]);
+
+        Book::factory()->create([
+            'title' => 'PHP基礎',
+        ]);
+
+        $response = $this->getJson('/api/v1/books?keyword=Laravel');
+
+        $response->assertStatus(200)
+                 ->assertJsonCount(1, 'data')
+                 ->assertJsonPath('data.0.title', 'Laravel入門');
+    }
+
+    public function test_書籍一覧APIでジャンル絞り込みができる(): void
+    {
+        $genre = \App\Models\Genre::factory()->create([
+            'name' => 'ミステリー',
+        ]);
+
+        $book1 = Book::factory()->create([
+            'title' => 'ミステリー小説',
+        ]);
+
+        $book2 = Book::factory()->create([
+            'title' => '料理の本',
+        ]);
+
+        $book1->genres()->attach($genre->id);
+
+        $response = $this->getJson("/api/v1/books?genre={$genre->id}");
+
+        $response->assertStatus(200)
+                 ->assertJsonCount(1, 'data')
+                 ->assertJsonPath('data.0.title', 'ミステリー小説');
+    }
+
+    public function test_書籍一覧APIでページネーションができる(): void
+    {
+        Book::factory()->count(11)->create();
+
+        $response = $this->getJson('/api/v1/books?page=1');
+
+        $response->assertStatus(200)
+                 ->assertJsonCount(10, 'data')
+                 ->assertJsonPath('meta.total', 11)
+                 ->assertJsonPath('meta.last_page', 2);
+
+        $response = $this->getJson('/api/v1/books?page=2');
+
+        $response->assertStatus(200)
+                 ->assertJsonCount(1, 'data')
+                 ->assertJsonPath('meta.current_page', 2);
+    }
+
+    public function test_書籍一覧APIでレビュー平均評価と件数を取得できる(): void
+    {
+        $book = Book::factory()->create();
+
+        \App\Models\Review::factory()->create([
+            'book_id' => $book->id,
+            'rating' => 4,
+        ]);
+
+        \App\Models\Review::factory()->create([
+            'book_id' => $book->id,
+            'rating' => 2,
+        ]);
+
+        $response = $this->getJson('/api/v1/books');
+
+        $response->assertStatus(200)
+                 ->assertJsonPath('data.0.reviews_count', 2)
+                 ->assertJsonPath('data.0.average_rating', 3);
+    }
+
 }
