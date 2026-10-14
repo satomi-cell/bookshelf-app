@@ -322,4 +322,11 @@ class BookApiTest extends TestCase
         ]);
     }
 
+    public function test_存在しない書籍を削除すると404を返す(): void
+    {
+        $response = $this->deleteJson('/api/v1/books/99999');
+
+        $response->assertStatus(404);
+    }
+
 }
