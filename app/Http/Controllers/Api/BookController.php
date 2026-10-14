@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Book;
 use App\Http\Requests\Api\UpdateBookRequest;
+use App\Http\Requests\Api\StoreBookRequest;
 use App\Http\Resources\BookResource;
 
 class BookController extends Controller
@@ -33,6 +34,21 @@ class BookController extends Controller
         return BookResource::collection($books);
     }
 
+    public function store(StoreBookRequest $request)
+    {
+        $validated = $request->validated();
+
+        $genres = $validated['genres'];
+        unset($validated['genres']);
+
+        $book = Book::create($validated);
+        $book->genres()->sync($genres);
+
+        return (new BookResource($book->load('genres')))
+            ->response()
+            ->setStatusCode(201);
+    }
+    
     public function show(Book $book)
     {
         $book->load(['genres', 'reviews.user']); 

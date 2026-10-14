@@ -265,4 +265,61 @@ class BookApiTest extends TestCase
         ]);
     }
 
+   public function test_書籍登録APIで書籍を登録できる(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $genre = \App\Models\Genre::factory()->create();
+
+        $response = $this->postJson('/api/v1/books', [
+            'user_id' => $user->id,
+            'title' => 'Laravel実践入門',
+            'author' => 'テスト著者',
+            'isbn' => '9781234567890',
+            'published_date' => '2026-01-01',
+            'description' => 'Laravelの学習書です。',
+            'image_url' => null,
+            'genres' => [$genre->id],
+        ]);
+
+        $response->assertStatus(201)
+                 ->assertJsonPath('data.title', 'Laravel実践入門');
+
+        $this->assertDatabaseHas('books', [
+            'user_id' => $user->id,
+            'title' => 'Laravel実践入門',
+            'isbn' => '9781234567890',
+        ]);
+
+        $book = Book::where('isbn', '9781234567890')->firstOrFail();
+
+        $this->assertDatabaseHas('book_genre', [
+            'book_id' => $book->id,
+            'genre_id' => $genre->id,
+        ]);
+    }
+    
+    public function test_書籍登録APIで書籍名が空欄の場合はエラーになる(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $genre = \App\Models\Genre::factory()->create();
+
+        $response = $this->postJson('/api/v1/books', [
+            'user_id' => $user->id,
+            'title' => '',
+            'author' => 'テスト著者',
+            'isbn' => '9781234567890',
+            'published_date' => '2026-01-01',
+            'description' => 'テスト説明',
+            'image_url' => null,
+            'genres' => [$genre->id],
+        ]);
+
+         $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['title']);
+
+        $this->assertDatabaseMissing('books', [
+            'isbn' => '9781234567890',
+        ]);
+    }
+
 }
