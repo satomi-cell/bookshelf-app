@@ -68,7 +68,9 @@ class ReviewController extends Controller
 
         $review->delete();
 
-        return redirect()->route('books.show', $review->book);
+        return redirect()
+            ->route('books.show', $review->book)
+            ->with('success', 'レビューを削除しました。');
     }
 
 }
