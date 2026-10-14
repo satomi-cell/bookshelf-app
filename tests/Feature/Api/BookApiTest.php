@@ -329,4 +329,74 @@ class BookApiTest extends TestCase
         $response->assertStatus(404);
     }
 
+    public function test_書籍登録APIで存在しないユーザーIDはエラーになる(): void
+    {
+        $genre = \App\Models\Genre::factory()->create();
+
+        $response = $this->postJson('/api/v1/books', [
+            'user_id' => 99999,
+            'title' => 'Laravel入門',
+            'author' => 'テスト著者',
+            'isbn' => '9781234567890',
+            'published_date' => '2026-01-01',
+            'description' => 'テスト説明',
+            'image_url' => null,
+            'genres' => [$genre->id],
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['user_id']);
+
+        $this->assertDatabaseMissing('books', [
+            'isbn' => '9781234567890',
+        ]);
+    }
+
+    public function test_書籍登録APIでISBNが重複するとエラーになる(): void
+    {
+        $existingBook = Book::factory()->create();
+        $user = \App\Models\User::factory()->create();
+        $genre = \App\Models\Genre::factory()->create();
+
+        $response = $this->postJson('/api/v1/books', [
+            'user_id' => $user->id,
+            'title' => '新しい書籍',
+            'author' => 'テスト著者',
+            'isbn' => $existingBook->isbn,
+            'published_date' => '2026-01-01',
+            'description' => 'テスト説明',
+            'image_url' => null,
+            'genres' => [$genre->id],
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['isbn']);
+
+        $this->assertDatabaseCount('books', 1);
+    }
+
+    public function test_書籍登録APIで存在しないジャンルIDはエラーになる(): void
+    {
+        $user = \App\Models\User::factory()->create();
+
+        $response = $this->postJson('/api/v1/books', [
+            'user_id' => $user->id,
+            'title' => 'Laravel入門',
+            'author' => 'テスト著者',
+            'isbn' => '9781234567890',
+            'published_date' => '2026-01-01',
+            'description' => 'テスト説明',
+            'image_url' => null,
+            'genres' => [99999],
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['genres.0']);
+
+        $this->assertDatabaseMissing('books', [
+            'isbn' => '9781234567890',
+        ]);
+    }
+  
+
 }
