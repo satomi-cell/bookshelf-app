@@ -170,4 +170,50 @@ class BookApiTest extends TestCase
                  ->assertJsonPath('data.0.average_rating', 3);
     }
 
+    public function test_書籍更新APIで書籍情報を更新できる(): void
+    {
+        $book = Book::factory()->create();
+
+        $genre = \App\Models\Genre::factory()->create();
+
+        $response = $this->putJson("/api/v1/books/{$book->id}", [
+            'title' => '更新後の書籍タイトル',
+            'author' => '更新後の著者',
+            'isbn' => $book->isbn,
+            'published_date' => '2026-01-01',
+            'description' => '更新後の説明',
+            'image_url' => null,
+            'genres' => [$genre->id],
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'title' => '更新後の書籍タイトル',
+            'author' => '更新後の著者',
+        ]);
+
+        $this->assertDatabaseHas('book_genre', [
+            'book_id' => $book->id,
+            'genre_id' => $genre->id,
+        ]);
+    }
+    
+    public function test_書籍削除APIで書籍を削除できる(): void
+    {
+        $book = Book::factory()->create();
+
+        $response = $this->deleteJson("/api/v1/books/{$book->id}");
+
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'message' => '書籍を削除しました。',
+                 ]);
+
+        $this->assertDatabaseMissing('books', [
+            'id' => $book->id,
+        ]);
+    }
+
 }
