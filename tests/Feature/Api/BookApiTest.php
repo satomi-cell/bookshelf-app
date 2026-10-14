@@ -216,4 +216,53 @@ class BookApiTest extends TestCase
         ]);
     }
 
+    public function test_書籍更新APIで書籍名が空欄の場合はエラーになる(): void
+    {
+        $book = Book::factory()->create();
+        $genre = \App\Models\Genre::factory()->create();
+
+        $response = $this->putJson("/api/v1/books/{$book->id}", [
+            'title' => '',
+            'author' => 'テスト著者',
+            'isbn' => $book->isbn,
+            'published_date' => '2026-01-01',
+            'description' => 'テスト説明',
+            'image_url' => null,
+            'genres' => [$genre->id],
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['title']);
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'title' => $book->title,
+        ]);
+    }
+
+    public function test_書籍更新APIでISBNが重複するとエラーになる(): void
+    {
+        $book = Book::factory()->create();
+        $otherBook = Book::factory()->create();
+        $genre = \App\Models\Genre::factory()->create();
+
+        $response = $this->putJson("/api/v1/books/{$book->id}", [
+            'title' => '更新後のタイトル',
+            'author' => 'テスト著者',
+            'isbn' => $otherBook->isbn,
+            'published_date' => '2026-01-01',
+            'description' => 'テスト説明',
+            'image_url' => null,
+            'genres' => [$genre->id],
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['isbn']);
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'isbn' => $book->isbn,
+        ]);
+    }
+
 }
