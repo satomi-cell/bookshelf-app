@@ -232,7 +232,8 @@ class BookApiTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['title']);
+                 ->assertJsonValidationErrors(['title'])
+                 ->assertJsonPath('errors.title.0', 'タイトルを入力してください。');
 
         $this->assertDatabaseHas('books', [
             'id' => $book->id,
@@ -314,8 +315,9 @@ class BookApiTest extends TestCase
             'genres' => [$genre->id],
         ]);
 
-         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['title']);
+        $response->assertStatus(422)
+             ->assertJsonValidationErrors(['title'])
+             ->assertJsonPath('errors.title.0', 'タイトルを入力してください。');
 
         $this->assertDatabaseMissing('books', [
             'isbn' => '9781234567890',
