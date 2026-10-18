@@ -400,5 +400,66 @@ class BookApiTest extends TestCase
         ]);
     }
   
+    public function test_書籍一覧APIで1ページの件数を指定できる(): void
+    {
+        Book::factory()->count(5)->create();
 
+        $response = $this->getJson('/api/v1/books?per_page=2');
+
+        $response->assertStatus(200)
+                 ->assertJsonCount(2, 'data')
+                 ->assertJsonPath('meta.per_page', 2)
+                 ->assertJsonPath('meta.total', 5)
+                 ->assertJsonPath('meta.last_page', 3);
+    }
+
+    public function test_書籍一覧APIで1ページの件数が0の場合はエラーになる(): void
+    {
+        $response = $this->getJson('/api/v1/books?per_page=0');
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['per_page'])
+                 ->assertJsonPath(
+                     'errors.per_page.0',
+                     '1ページの件数は1以上で入力してください。'
+                 );
+    }
+
+    public function test_書籍一覧APIで存在しないジャンルIDはエラーになる(): void
+    {
+        $response = $this->getJson('/api/v1/books?genre=99999');
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['genre'])
+                 ->assertJsonPath(
+                     'errors.genre.0',
+                     '指定されたジャンルは存在しません。'
+                 );
+    }
+
+    public function test_書籍一覧APIでページ番号が0の場合はエラーになる(): void
+    {
+        $response = $this->getJson('/api/v1/books?page=0');
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['page'])
+                 ->assertJsonPath(
+                     'errors.page.0',
+                     'ページ番号は1以上で入力してください。'
+                 );
+    }
+
+    public function test_書籍一覧APIでキーワードが255文字を超える場合はエラーになる(): void
+    {
+        $keyword = str_repeat('a', 256);
+
+        $response = $this->getJson('/api/v1/books?keyword=' . $keyword);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['keyword'])
+                 ->assertJsonPath(
+                     'errors.keyword.0',
+                     'キーワードは255文字以内で入力してください。'
+                 );
+    }
 }

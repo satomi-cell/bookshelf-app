@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\IndexBookRequest;
 use App\Models\Book;
 use App\Http\Requests\Api\UpdateBookRequest;
 use App\Http\Requests\Api\StoreBookRequest;
@@ -11,7 +11,7 @@ use App\Http\Resources\BookResource;
 
 class BookController extends Controller
 {
-    public function index(Request $request)
+    public function index(IndexBookRequest $request)
     {
         $books = Book::with('genres')
             ->withAvg('reviews', 'rating')
@@ -29,8 +29,7 @@ class BookController extends Controller
                     $q->where('genres.id', $request->input('genre'));
                 });
             })
-            ->paginate(10);
-
+            ->paginate($request->integer('per_page', 10));
         return BookResource::collection($books);
     }
 
