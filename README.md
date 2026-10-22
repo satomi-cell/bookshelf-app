@@ -68,7 +68,13 @@ DB_PASSWORD=password
 ```bash
 ./vendor/bin/sail artisan migrate
 ```
+  ### 初期データの登録（シーディング）
 
+  以下のコマンドで、ユーザー・ジャンル・書籍・レビュー・お気に入り・レビューへのいいねの初期データを登録できます。
+
+```bash
+  ./vendor/bin/sail artisan db:seed
+```
 ### 7. フロントエンドのパッケージをインストール
 
 ```bash
