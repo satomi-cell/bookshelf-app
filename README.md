@@ -136,8 +136,8 @@ http://localhost/books
 
 ## テスト
 
-以下のコマンドでテストを実行できます。
+以下のコマンドでテストとカバレッジを確認できます。
 
 ```bash
-./vendor/bin/sail artisan test
+./vendor/bin/sail artisan test --coverage
 ```
