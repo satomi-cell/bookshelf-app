@@ -7,6 +7,7 @@ use App\Models\Genre;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
+use Illuminate\Support\Facades\Http;
 
 class BookController extends Controller
 {
@@ -64,6 +65,68 @@ class BookController extends Controller
        $genres = Genre::all();
 
       return view('books.index', compact('books', 'genres'));
+   }
+   
+   public function fetchByIsbn(string $isbn)
+   {
+       // ISBNが数字13桁であることを確認
+       if (!preg_match('/^[0-9]{13}$/', $isbn)) {
+           return response()->json([
+               'error' => 'ISBNは13桁の数字で入力してください。',
+           ], 422);
+       }
+
+       try {
+           // Google Books APIから書籍情報を取得
+          $response = Http::timeout(10)->get(
+              'https://www.googleapis.com/books/v1/volumes',
+              [
+                 'q' => 'isbn:' . $isbn,
+                 'key' => config('services.google_books.api_key'),
+              ]
+          ); 
+           if ($response->status() === 429) {
+              return response()->json([
+                  'error' => 'Google Books APIの利用上限に達しています。',
+              ], 503);
+           }
+
+           if (!$response->successful()) {
+              return response()->json([
+                  'error' => '書籍情報の取得に失敗しました。',
+               ], 502);
+           }
+           $items = $response->json('items', []);
+
+           if (empty($items)) {
+               return response()->json([
+                   'error' => '該当する書籍が見つかりませんでした。',
+               ], 404);
+           }
+
+           $info = $items[0]['volumeInfo'] ?? [];
+
+           // 出版日は年月日がそろっている場合のみ設定
+           $publishedDate = $info['publishedDate'] ?? null;
+
+           if ($publishedDate &&
+               !preg_match('/^\d{4}-\d{2}-\d{2}$/', $publishedDate)) {
+               $publishedDate = null;
+           }
+
+           return response()->json([
+               'title' => $info['title'] ?? '',
+               'author' => implode(', ', $info['authors'] ?? []),
+               'description' => $info['description'] ?? '',
+               'published_date' => $publishedDate,
+               'image_url' => $info['imageLinks']['thumbnail'] ?? '',
+           ]);
+
+       } catch (\Illuminate\Http\Client\ConnectionException $e) {
+           return response()->json([
+               'error' => 'Google Books APIとの通信に失敗しました。',
+           ], 502);
+       }
    }
    
    public function create()

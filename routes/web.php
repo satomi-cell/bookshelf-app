@@ -23,6 +23,10 @@ Route::get('/', function () {
 });
 Route::get('/books', [BookController::class, 'index'])->name('books.index');
 Route::get('/books/create', [BookController::class, 'create'])->middleware('auth')->name('books.create');
+Route::get('/books/isbn/{isbn}', [BookController::class, 'fetchByIsbn'])
+    ->middleware('auth')
+    ->where('isbn', '[0-9]{13}')
+    ->name('books.isbn');
 Route::post('/books', [BookController::class, 'store'])->middleware('auth')->name('books.store');
 Route::get('/ranking', [RankingController::class, 'index'])->name('ranking.index');
 Route::get('/books/{book}', [BookController::class, 'show'])->name('books.show');
