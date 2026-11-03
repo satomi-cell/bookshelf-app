@@ -12,9 +12,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('app:expire-reading-plans')
+            ->dailyAt('00:00')
+            ->timezone('Asia/Tokyo');
     }
-
     /**
      * Register the commands for the application.
      */

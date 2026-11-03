@@ -6,7 +6,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\GenreController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\ReadingPlanController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -48,6 +48,24 @@ Route::middleware('auth')->group(function () {
     Route::get('/reviews/{review}/edit',[ReviewController::class,'edit'])->name('reviews.edit');    Route::put('/reviews/{review}',[ReviewController::class,'update'])->name('reviews.update');
     Route::delete('/reviews/{review}',[ReviewController::class,'destroy'])->name('reviews.destroy');
 });
-
-
-
+Route::get('/reading-plans', [ReadingPlanController::class, 'index'])
+    ->middleware('auth')
+    ->name('reading-plans.index');
+Route::get('/reading-plans/create', [ReadingPlanController::class, 'create'])
+    ->middleware('auth')
+    ->name('reading-plans.create');
+Route::post('/reading-plans', [ReadingPlanController::class, 'store'])
+    ->middleware('auth')
+    ->name('reading-plans.store');
+Route::post('/reading-plans/{readingPlan}/complete', [ReadingPlanController::class, 'complete'])
+    ->middleware('auth')
+    ->name('reading-plans.complete');
+Route::get('/reading-plans/{readingPlan}/edit', [ReadingPlanController::class, 'edit'])
+    ->middleware('auth')
+    ->name('reading-plans.edit');
+Route::delete('/reading-plans/{readingPlan}', [ReadingPlanController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('reading-plans.destroy');
+Route::put('/reading-plans/{readingPlan}', [ReadingPlanController::class, 'update'])
+    ->middleware('auth')
+    ->name('reading-plans.update');        
