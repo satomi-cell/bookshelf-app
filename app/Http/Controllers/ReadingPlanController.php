@@ -110,11 +110,30 @@ class ReadingPlanController extends Controller
         $validated = $request->validate([
              'target_date' => ['required', 'date', 'after_or_equal:today'],
         ]);
-        $readingPlan->update([
-             'target_date' => $validated['target_date'],
-        ]);
+        
+        $isExpired = $readingPlan->status === \App\Enums\ReadingPlanStatus::Expired;
+        
+        if ($isExpired) {
+            $hasInProgressPlan = $request->user()
+                 ->readingPlans()
+                 ->where('book_id', $readingPlan->book_id)
+                 ->where('status', 'in_progress')
+                 ->where('id', '!=', $readingPlan->id)
+                 ->exists();
 
-        return redirect()
+            if ($hasInProgressPlan) {
+                return back()->withErrors([
+                    'target_date' => 'この書籍には進行中の読書計画がすでに登録されています。',
+                ])->withInput();
+            }
+        }
+        
+       $readingPlan->update([
+           'target_date' => $validated['target_date'],
+           'status' => 'in_progress',
+       ]);
+        
+       return redirect()
             ->route('reading-plans.index')
             ->with('success', '読書計画を更新しました。');
     }
