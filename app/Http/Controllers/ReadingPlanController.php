@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreReadingPlanRequest;
+use App\Http\Requests\UpdateReadingPlanRequest;
 use App\Models\Book;
 use App\Models\ReadingPlan;
 
@@ -32,12 +34,9 @@ class ReadingPlanController extends Controller
         return view('reading-plans.create', compact('books'));
     }
 
-    public function store(Request $request)
+    public function store(StoreReadingPlanRequest $request)
     {
-        $validated = $request->validate([
-            'book_id' => ['required', 'integer', 'exists:books,id'],
-            'target_date' => ['required', 'date', 'after_or_equal:today'],
-        ]);
+        $validated = $request->validated();
 
         $hasInProgressPlan = $request->user()
             ->readingPlans()
@@ -97,7 +96,7 @@ class ReadingPlanController extends Controller
         return view('reading-plans.edit', compact('readingPlan'));
     }
 
-    public function update(Request $request, ReadingPlan $readingPlan)
+    public function update(UpdateReadingPlanRequest $request, ReadingPlan $readingPlan)
     {
         if ($readingPlan->user_id !== auth()->id()) {
              abort(403);
@@ -107,9 +106,7 @@ class ReadingPlanController extends Controller
              abort(403);
         }
 
-        $validated = $request->validate([
-             'target_date' => ['required', 'date', 'after_or_equal:today'],
-        ]);
+        $validated = $request->validated();
         
         $isExpired = $readingPlan->status === \App\Enums\ReadingPlanStatus::Expired;
         
