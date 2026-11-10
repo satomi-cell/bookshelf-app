@@ -7,6 +7,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\GenreController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReadingPlanController;
+use App\Http\Controllers\NotificationController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -68,4 +69,15 @@ Route::delete('/reading-plans/{readingPlan}', [ReadingPlanController::class, 'de
     ->name('reading-plans.destroy');
 Route::put('/reading-plans/{readingPlan}', [ReadingPlanController::class, 'update'])
     ->middleware('auth')
-    ->name('reading-plans.update');        
+    ->name('reading-plans.update');
+
+Route::middleware('auth')->group(function () {
+    // 通知一覧
+    Route::get('/notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    // 通知を既読にする
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])
+        ->name('notifications.read');
+});
+        
