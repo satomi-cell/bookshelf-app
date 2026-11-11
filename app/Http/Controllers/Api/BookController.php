@@ -40,23 +40,27 @@ class BookController extends Controller
         $genres = $validated['genres'];
         unset($validated['genres']);
 
-        $book = Book::create($validated);
+        $book = $request->user()->books()->create($validated);
+
+
         $book->genres()->sync($genres);
 
         return (new BookResource($book->load('genres')))
             ->response()
             ->setStatusCode(201);
     }
-    
+
     public function show(Book $book)
     {
-        $book->load(['genres', 'reviews.user']); 
-        
+        $book->load(['genres', 'reviews.user']);
+
         return new BookResource($book);
     }
 
     public function update(UpdateBookRequest $request, Book $book)
     {
+        abort_unless($request->user()->id === $book->user_id, 403);
+
         $validated = $request->validated();
 
         $genres = $validated['genres'];
@@ -70,6 +74,8 @@ class BookController extends Controller
 
     public function destroy(Book $book)
     {
+        abort_unless(auth()->id() === $book->user_id, 403);
+
         $book->delete();
 
         return response()->json([

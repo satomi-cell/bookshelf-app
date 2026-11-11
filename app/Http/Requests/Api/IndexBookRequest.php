@@ -29,7 +29,7 @@ class IndexBookRequest extends FormRequest
         ];
     }
 
-        public function messages(): array
+    public function messages(): array
     {
         return [
             'keyword.string' => 'キーワードは文字列で入力してください。',

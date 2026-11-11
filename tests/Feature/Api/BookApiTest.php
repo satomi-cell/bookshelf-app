@@ -14,7 +14,7 @@ class BookApiTest extends TestCase
      * A basic feature test example.
      */
     public function test_書籍一覧APIを取得できる(): void
-    {         
+    {
         $response = $this->getJson('/api/v1/books');
 
         $response->assertStatus(200)
@@ -47,7 +47,7 @@ class BookApiTest extends TestCase
                  ->assertJsonPath('data.id', $book->id)
                  ->assertJsonPath('data.title', $book->title);
     }
-    
+
     public function test_存在しない書籍は404を返す(): void
     {
         $response = $this->getJson('/api/v1/books/99999');
@@ -75,7 +75,7 @@ class BookApiTest extends TestCase
     }
 
     public function test_書籍詳細APIでジャンル情報を取得できる(): void
-    {    
+    {
         $book = Book::factory()->create();
 
         $genre = \App\Models\Genre::factory()->create([
@@ -90,7 +90,7 @@ class BookApiTest extends TestCase
                  ->assertJsonPath('data.genres.0.id', $genre->id)
                  ->assertJsonPath('data.genres.0.name', 'ミステリー');
     }
-    
+
     public function test_書籍一覧APIでキーワード検索ができる(): void
     {
         Book::factory()->create([
@@ -172,7 +172,11 @@ class BookApiTest extends TestCase
 
     public function test_書籍更新APIで書籍情報を更新できる(): void
     {
-        $book = Book::factory()->create();
+        $user = \App\Models\User::factory()->create();
+
+        $book = Book::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user, 'sanctum');
 
         $genre = \App\Models\Genre::factory()->create();
 
@@ -199,10 +203,14 @@ class BookApiTest extends TestCase
             'genre_id' => $genre->id,
         ]);
     }
-    
+
     public function test_書籍削除APIで書籍を削除できる(): void
     {
-        $book = Book::factory()->create();
+        $user = \App\Models\User::factory()->create();
+
+        $book = Book::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user, 'sanctum');
 
         $response = $this->deleteJson("/api/v1/books/{$book->id}");
 
@@ -218,7 +226,12 @@ class BookApiTest extends TestCase
 
     public function test_書籍更新APIで書籍名が空欄の場合はエラーになる(): void
     {
-        $book = Book::factory()->create();
+        $user = \App\Models\User::factory()->create();
+
+        $book = Book::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user, 'sanctum');
+
         $genre = \App\Models\Genre::factory()->create();
 
         $response = $this->putJson("/api/v1/books/{$book->id}", [
@@ -243,7 +256,12 @@ class BookApiTest extends TestCase
 
     public function test_書籍更新APIでISBNが重複するとエラーになる(): void
     {
-        $book = Book::factory()->create();
+        $user = \App\Models\User::factory()->create();
+
+        $book = Book::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user, 'sanctum');
+
         $otherBook = Book::factory()->create();
         $genre = \App\Models\Genre::factory()->create();
 
@@ -269,6 +287,9 @@ class BookApiTest extends TestCase
    public function test_書籍登録APIで書籍を登録できる(): void
     {
         $user = \App\Models\User::factory()->create();
+
+        $this->actingAs($user, 'sanctum');
+
         $genre = \App\Models\Genre::factory()->create();
 
         $response = $this->postJson('/api/v1/books', [
@@ -298,10 +319,13 @@ class BookApiTest extends TestCase
             'genre_id' => $genre->id,
         ]);
     }
-    
+
     public function test_書籍登録APIで書籍名が空欄の場合はエラーになる(): void
     {
         $user = \App\Models\User::factory()->create();
+
+        $this->actingAs($user, 'sanctum');
+
         $genre = \App\Models\Genre::factory()->create();
 
         $response = $this->postJson('/api/v1/books', [
@@ -326,13 +350,19 @@ class BookApiTest extends TestCase
 
     public function test_存在しない書籍を削除すると404を返す(): void
     {
+        $user = \App\Models\User::factory()->create();
+        $this->actingAs($user, 'sanctum');
+
         $response = $this->deleteJson('/api/v1/books/99999');
 
         $response->assertStatus(404);
     }
 
-    public function test_書籍登録APIで存在しないユーザーIDはエラーになる(): void
+    public function test_書籍登録APIでは認証ユーザーのIDが登録される(): void
     {
+        $user = \App\Models\User::factory()->create();
+        $this->actingAs($user, 'sanctum');
+
         $genre = \App\Models\Genre::factory()->create();
 
         $response = $this->postJson('/api/v1/books', [
@@ -346,18 +376,21 @@ class BookApiTest extends TestCase
             'genres' => [$genre->id],
         ]);
 
-        $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['user_id']);
+        $response->assertStatus(201);
 
-        $this->assertDatabaseMissing('books', [
+        $this->assertDatabaseHas('books', [
             'isbn' => '9781234567890',
+            'user_id' => $user->id,
         ]);
-    }
+}
 
     public function test_書籍登録APIでISBNが重複するとエラーになる(): void
     {
         $existingBook = Book::factory()->create();
         $user = \App\Models\User::factory()->create();
+
+        $this->actingAs($user, 'sanctum');
+
         $genre = \App\Models\Genre::factory()->create();
 
         $response = $this->postJson('/api/v1/books', [
@@ -381,6 +414,8 @@ class BookApiTest extends TestCase
     {
         $user = \App\Models\User::factory()->create();
 
+        $this->actingAs($user, 'sanctum');
+
         $response = $this->postJson('/api/v1/books', [
             'user_id' => $user->id,
             'title' => 'Laravel入門',
@@ -399,7 +434,7 @@ class BookApiTest extends TestCase
             'isbn' => '9781234567890',
         ]);
     }
-  
+
     public function test_書籍一覧APIで1ページの件数を指定できる(): void
     {
         Book::factory()->count(5)->create();
