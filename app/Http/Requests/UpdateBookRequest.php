@@ -23,21 +23,22 @@ class UpdateBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-        'title' => ['required', 'string', 'max:255'],
-        'author' => ['required', 'string', 'max:255'],
-        'isbn' => [
-            'nullable',
-            'digits:13',
-            Rule::unique('books', 'isbn')->ignore($this->route('book')),
-        ],
-        'published_date' => ['nullable', 'date'],   'description' => ['nullable', 'string'],
-        'image_url' => ['nullable', 'url', 'max:255'],
-        'genres' => ['required', 'array', 'min:1'],
-        'genres.*' => ['exists:genres,id'],
+            'title' => ['required', 'string', 'max:255'],
+            'author' => ['required', 'string', 'max:255'],
+            'isbn' => [
+                'nullable',
+                'digits:13',
+                Rule::unique('books', 'isbn')->ignore($this->route('book')),
+            ],
+            'published_date' => ['nullable', 'date'],
+            'description' => ['nullable', 'string'],
+            'image_url' => ['nullable', 'url', 'max:255'],
+            'genres' => ['required', 'array', 'min:1'],
+            'genres.*' => ['exists:genres,id'],
         ];
     }
 
-        public function messages(): array
+    public function messages(): array
     {
         return [
             'title.required' => 'タイトルを入力してください。',
