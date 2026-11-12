@@ -497,4 +497,79 @@ class BookApiTest extends TestCase
                      'キーワードは255文字以内で入力してください。'
                  );
     }
+
+    public function test_未ログインユーザーは書籍登録APIを利用できない(): void
+    {
+        $response = $this->postJson('/api/v1/books', []);
+
+        $response->assertStatus(401);
+    }
+
+    public function test_未ログインユーザーは書籍更新APIを利用できない(): void
+    {
+        $book = Book::factory()->create();
+
+        $response = $this->putJson("/api/v1/books/{$book->id}", [
+            'title' => '更新後のタイトル',
+        ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function test_未ログインユーザーは書籍削除APIを利用できない(): void
+    {
+        $book = Book::factory()->create();
+
+        $response = $this->deleteJson("/api/v1/books/{$book->id}");
+
+        $response->assertStatus(401);
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+        ]);
+    }
+
+    public function test_他人の書籍は更新APIで変更できない(): void
+    {
+        $owner = \App\Models\User::factory()->create();
+        $otherUser = \App\Models\User::factory()->create();
+
+        $book = Book::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $this->actingAs($otherUser, 'sanctum');
+
+        $response = $this->putJson("/api/v1/books/{$book->id}", [
+            'title' => '勝手に変更したタイトル',
+        ]);
+
+        $response->assertStatus(403);
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'title' => $book->title,
+        ]);
+    }
+
+    public function test_他人の書籍は削除APIで削除できない(): void
+    {
+        $owner = \App\Models\User::factory()->create();
+        $otherUser = \App\Models\User::factory()->create();
+
+        $book = Book::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $this->actingAs($otherUser, 'sanctum');
+
+        $response = $this->deleteJson("/api/v1/books/{$book->id}");
+
+        $response->assertStatus(403);
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+        ]);
+    }
+
 }
