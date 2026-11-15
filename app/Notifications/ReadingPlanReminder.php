@@ -13,11 +13,12 @@ class ReadingPlanReminder extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct()
-    {
-        //
+    public function __construct(
+        public int $readingPlanId,
+        public string $bookTitle,
+        public string $timing
+    ) {
     }
-
     /**
      * Get the notification's delivery channels.
      *
@@ -36,9 +37,16 @@ class ReadingPlanReminder extends Notification
     public function toArray(object $notifiable): array
     {
         return [
+            'reading_plan_id' => $this->readingPlanId,
+            'book_title' => $this->bookTitle,
             'title' => '読書計画のお知らせ',
-            'body' => '読書計画の期日をご確認ください。',
-            'timing' => 'on_due_date',
+            'body' => match ($this->timing) {
+                'three_days_before' => "『{$this->bookTitle}』の読書計画の期日まであと3日です。",
+                'on_due_date' => "『{$this->bookTitle}』の読書計画は本日が期日です。",
+                'three_days_after' => "『{$this->bookTitle}』の読書計画は期日から3日が経過しました。",
+                default => "『{$this->bookTitle}』の読書計画の期日をご確認ください。",
+            },
+            'timing' => $this->timing,
         ];
     }
 }

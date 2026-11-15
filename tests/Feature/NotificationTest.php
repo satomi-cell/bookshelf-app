@@ -16,7 +16,7 @@ class NotificationTest extends TestCase
     public function test_authenticated_user_can_view_notifications(): void
     {
         $user = \App\Models\User::factory()->create();
-        
+
         $response = $this->actingAs($user)->get('/notifications');
 
         $response->assertStatus(200);
@@ -35,7 +35,11 @@ class NotificationTest extends TestCase
         $user = \App\Models\User::factory()->create();
 
         // テスト用の通知を作成
-        $user->notify(new ReadingPlanReminder());
+        $user->notify(new ReadingPlanReminder(
+            1,
+            'テスト書籍',
+            'on_due_date'
+        ));
 
         $notification = $user->notifications()->first();
 
@@ -55,7 +59,11 @@ class NotificationTest extends TestCase
         $otherUser = \App\Models\User::factory()->create();
 
         // 別のユーザーに通知を作成
-        $otherUser->notify(new ReadingPlanReminder());
+        $otherUser->notify(new ReadingPlanReminder(
+            1,
+            'テスト書籍',
+            'on_due_date'
+        ));
 
         $notification = $otherUser->notifications()->first();
 
