@@ -11,7 +11,13 @@ class BookSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('email', 'yamada@example.com')->firstOrFail();
+        $users = User::whereIn('email', [
+            'yamada@example.com',
+            'suzuki@example.com',
+            'tanaka@example.com',
+            'sato@example.com',
+            'takahashi@example.com',
+        ])->get();
 
         $books = [
             [
@@ -97,7 +103,7 @@ class BookSeeder extends Seeder
             $genreNames = $data['genres'];
             unset($data['genres']);
 
-            $data['user_id'] = $user->id;
+            $data['user_id'] = $users->random()->id;
             $data['description'] = $data['title'] . 'の紹介文です。';
             $data['image_url'] = 'https://placehold.co/200x300/e2e8f0/475569?text=' . ($index + 1);
 
