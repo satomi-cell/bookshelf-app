@@ -37,8 +37,7 @@ class BookController extends Controller
       }
 
       // 並び替え
-      $sort = request('sort', 'newest');
-
+      $sort = request('sort', 'latest');
       switch ($sort) {
           case 'oldest':
               $query->orderBy('created_at')->orderBy('id');
@@ -54,7 +53,7 @@ class BookController extends Controller
               $query->orderBy('title')->orderBy('id');
               break;
 
-          case 'newest':
+          case 'latest':
           default:
               $query->orderByDesc('created_at')->orderByDesc('id');
               break;
