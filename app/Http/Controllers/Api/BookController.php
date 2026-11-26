@@ -59,7 +59,7 @@ class BookController extends Controller
 
     public function update(UpdateBookRequest $request, Book $book)
     {
-        abort_unless($request->user()->id === $book->user_id, 403);
+        $this->authorize('update', $book);
 
         $validated = $request->validated();
 
@@ -74,7 +74,7 @@ class BookController extends Controller
 
     public function destroy(Book $book)
     {
-        abort_unless(auth()->id() === $book->user_id, 403);
+        $this->authorize('delete', $book);
 
         $book->delete();
 
