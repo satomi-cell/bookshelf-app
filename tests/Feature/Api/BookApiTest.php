@@ -572,4 +572,119 @@ class BookApiTest extends TestCase
         ]);
     }
 
+    public function test_存在しない書籍を更新すると404を返す(): void
+    {
+        $user = \App\Models\User::factory()->create();
+
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->putJson('/api/v1/books/99999', [
+            'title' => '更新後のタイトル',
+        ]);
+
+        $response->assertStatus(404);
+    }
+
+    public function test_書籍削除APIで関連データも削除される(): void
+    {
+        $user = \App\Models\User::factory()->create();
+
+        $book = Book::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $genre = \App\Models\Genre::factory()->create();
+
+        $book->genres()->attach($genre->id);
+
+        $review = \App\Models\Review::factory()->create([
+            'book_id' => $book->id,
+            'user_id' => $user->id,
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('favorites')->insert([
+            'user_id' => $user->id,
+            'book_id' => $book->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->deleteJson("/api/v1/books/{$book->id}");
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseMissing('books', [
+            'id' => $book->id,
+        ]);
+
+        $this->assertDatabaseMissing('reviews', [
+            'id' => $review->id,
+        ]);
+
+        $this->assertDatabaseMissing('favorites', [
+            'book_id' => $book->id,
+        ]);
+
+        $this->assertDatabaseMissing('book_genre', [
+            'book_id' => $book->id,
+        ]);
+
+        $this->assertDatabaseHas('genres', [
+            'id' => $genre->id,
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+        ]);
+    }
+
+    public function test_Bearerトークンで書籍登録APIを利用できる(): void
+    {
+        $user = \App\Models\User::factory()->create();
+
+        $token = $user->createToken('test-token')->plainTextToken;
+
+        $genre = \App\Models\Genre::factory()->create();
+
+        $response = $this->withToken($token)
+            ->postJson('/api/v1/books', [
+                'title' => 'Laravel実践入門',
+                'author' => 'テスト著者',
+                'isbn' => '9781234567890',
+                'published_date' => '2026-01-01',
+                'description' => 'トークン認証のテストです。',
+                'image_url' => null,
+                'genres' => [$genre->id],
+            ]);
+
+        $response->assertStatus(201)
+                 ->assertJsonPath('data.title', 'Laravel実践入門');
+
+        $this->assertDatabaseHas('books', [
+            'user_id' => $user->id,
+            'title' => 'Laravel実践入門',
+            'isbn' => '9781234567890',
+        ]);
+    }
+
+    public function test_書籍一覧APIでジャンル情報を取得できる(): void
+    {
+        $book = Book::factory()->create();
+
+        $genre = \App\Models\Genre::factory()->create([
+            'name' => 'ミステリー',
+        ]);
+
+        $book->genres()->attach($genre->id);
+
+        $response = $this->getJson('/api/v1/books');
+
+        $response->assertStatus(200)
+                 ->assertJsonPath('data.0.id', $book->id)
+                 ->assertJsonPath('data.0.genres.0.id', $genre->id)
+                 ->assertJsonPath('data.0.genres.0.name', 'ミステリー');
+    }
+
 }
