@@ -9,7 +9,7 @@ class UpdateBookRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->id === $this->route('book')?->user_id;
+        return $this->user()?->can('update', $this->route('book')) ?? false;
     }
 
     public function rules(): array
