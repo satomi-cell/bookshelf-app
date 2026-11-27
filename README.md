@@ -24,7 +24,7 @@ BookShelfは、書籍の登録・管理やレビューの投稿ができるWeb�
 ### 1. リポジトリのクローン
 
 ```bash
-git clone https://github.com/satomi-cell/bookshelf-app.git
+git clone -b feature/advanced https://github.com/satomi-cell/bookshelf-app.git
 cd bookshelf-app
 ```
 
